@@ -1,0 +1,37 @@
+name: Bug report
+description: Report reproducible unexpected behavior.
+title: "bug: "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: "Thanks for reporting a problem. Do not include secrets, tokens, or private configuration."
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the expected behavior and the actual behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Include pi-agent-profiles, Pi, Node.js, and operating system versions.
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add relevant logs with sensitive values removed.
