@@ -102,6 +102,23 @@ describe("SDK foreground runner", () => {
     expect(stalled.abort).toHaveBeenCalled();
   });
 
+  it("resets the stall watchdog on provider activity but still stalls when no events arrive", async () => {
+    vi.useFakeTimers();
+    try {
+      let receive: (event: any) => void = () => {}; let resolvePrompt!: () => void;
+      const active = { messages: [{ role: "assistant", content: "finished" }], subscribe: (listener: (event: any) => void) => { receive = listener; return () => {}; }, abort: vi.fn(), prompt: () => new Promise<void>((resolve) => { resolvePrompt = resolve; }) };
+      const pending = createSdkForegroundRunner(async () => sdkFor(active, { DefaultResourceLoader: class { async reload() {} } }), testPaths).run(input({ config: { globalModelProfiles: {}, projectModelProfiles: {}, diagnostics: [], stallTimeoutMs: 10 } }));
+      await vi.advanceTimersByTimeAsync(9); receive({ type: "message_update", message: { role: "assistant", content: "still working" } }); await vi.advanceTimersByTimeAsync(9);
+      expect(active.abort).not.toHaveBeenCalled();
+      resolvePrompt(); await expect(pending).resolves.toMatchObject({ result: "finished" });
+
+      const stalled = { messages: [], subscribe: () => () => {}, abort: vi.fn(), prompt: () => new Promise<void>(() => {}) };
+      const stalledRun = createSdkForegroundRunner(async () => sdkFor(stalled, { DefaultResourceLoader: class { async reload() {} } }), testPaths).run(input({ config: { globalModelProfiles: {}, projectModelProfiles: {}, diagnostics: [], stallTimeoutMs: 10 } }));
+      const rejected = expect(stalledRun).rejects.toThrow("Subagent stalled after 10ms");
+      await vi.advanceTimersByTimeAsync(10); await rejected; expect(stalled.abort).toHaveBeenCalledOnce();
+    } finally { vi.useRealTimers(); }
+  });
+
   it("does not double-count subscribed usage present in session messages and disposes sessions exactly once", async () => {
     const dispose = vi.fn(); let receive: (event: any) => void = () => {};
     const session = { messages: [{ role: "assistant", content: "final answer", usage: { input: 3 } }], subscribe: vi.fn((listener) => { receive = listener; return () => {}; }), dispose, prompt: vi.fn(async () => { receive({ type: "message_end", message: { role: "assistant", content: "final answer", usage: { input: 3 } } }); return undefined; }) };

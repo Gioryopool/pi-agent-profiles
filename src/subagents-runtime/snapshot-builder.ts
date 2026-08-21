@@ -4,8 +4,9 @@ const TEXT_LIMIT = 16_000;
 const text = (value: unknown) => typeof value === "string" ? value.slice(0, TEXT_LIMIT) : undefined;
 const safeUsage = (value: unknown) => value && typeof value === "object" && !Array.isArray(value) ? Object.fromEntries(Object.entries(value).filter(([, amount]) => typeof amount === "number" && Number.isFinite(amount)).slice(0, 12)) : undefined;
 const safeLabel = (value: unknown) => typeof value === "string" && value.trim() ? value.trim().replace(/[\r\n\t]+/g, " ").slice(0, 160) : undefined;
+const safeTrail = (value: ForegroundTask["liveActivity"]) => (Array.isArray(value?.trail) ? value.trail : []).map((entry) => safeLabel(entry?.label)).filter((label): label is string => Boolean(label)).reduce<string[]>((trail, label) => [...trail.filter((entry) => entry !== label), label], []).slice(-8).map((label) => ({ label }));
 const safeLiveActivity = (value: ForegroundTask["liveActivity"]) => value ? {
-  trail: (Array.isArray(value.trail) ? value.trail : []).map((entry) => safeLabel(entry?.label)).filter((label): label is string => Boolean(label)).slice(-8).map((label) => ({ label })),
+  trail: safeTrail(value),
   ...(safeLabel(value.current?.label) ? { current: { label: safeLabel(value.current?.label)! } } : {}),
   ...(safeUsage(value.usage) ? { usage: safeUsage(value.usage)! } : {}),
 } : undefined;

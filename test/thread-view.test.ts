@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildThreadSnapshot, sanitizeThreadSnapshot } from "../src/subagents-runtime/thread-view.js";
+import { appendThreadEvent, buildThreadSnapshot, sanitizeThreadSnapshot } from "../src/subagents-runtime/thread-view.js";
 
 describe("thread snapshots", () => {
   it("bounds real nested events and excludes private definition/session fields", () => {
@@ -24,5 +24,16 @@ describe("thread snapshots", () => {
       expect.objectContaining({ role: "tool", name: "read", text: expect.stringContaining("ok") }),
     ]));
     expect(JSON.stringify(snapshot)).not.toContain("nestedSessionPath");
+  });
+  it("merges repeated tool lifecycle and streamed assistant updates into one entry each", () => {
+    let snapshot = appendThreadEvent(undefined, { type: "tool_execution_start", toolCallId: "call-1", toolName: "bash", args: { command: "compact" } });
+    snapshot = appendThreadEvent(snapshot, { type: "tool_execution_update", toolCallId: "call-1", toolName: "bash", partialResult: "working" });
+    snapshot = appendThreadEvent(snapshot, { type: "tool_execution_end", toolCallId: "call-1", toolName: "bash", result: "complete" });
+    snapshot = appendThreadEvent(snapshot, { type: "message_update", message: { role: "assistant", content: "partial" } });
+    snapshot = appendThreadEvent(snapshot, { type: "message_end", message: { role: "assistant", content: "final answer" } });
+    expect(snapshot.entries).toEqual([
+      expect.objectContaining({ role: "tool", name: "bash", toolCallId: "call-1", text: expect.stringContaining("complete") }),
+      { role: "assistant", text: "final answer" },
+    ]);
   });
 });

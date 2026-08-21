@@ -26,6 +26,13 @@ describe("runtime activity and handoff", () => {
     expect(state.usage).toEqual({ input: 4, output: 2 });
   });
 
+  it("drops noisy lifecycle labels and deduplicates the bounded completed trail", () => {
+    let state = createLiveActivityState();
+    for (const type of ["turn_start", "message_update", "agent_start", "auto_retry_start", "agent_end", "turn_end"]) state = processSubagentEvent(state, { type });
+    for (let index = 0; index < 12; index++) state = processSubagentEvent(state, { type: "tool_end", toolName: index % 2 ? "write" : "read" });
+    expect(state).toEqual({ trail: [{ label: "read" }, { label: "write" }] });
+  });
+
   it("renders completed trail dim and current activity accented", () => {
     const text = progressText({ id: "task", agent: "worker", task: "work", status: "running", mode: "task", attempt: 1, effort: "low", liveActivity: { trail: [{ label: "read" }], current: { label: "write" } } });
     expect(text).toContain("\u001b[2m↳ read\u001b[0m");

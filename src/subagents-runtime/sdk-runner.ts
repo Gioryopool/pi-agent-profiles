@@ -38,6 +38,15 @@ function aggregateUsage(messages: any[]): unknown {
   }
   return usage;
 }
+function terminalEvidence(event: any): boolean {
+  const message = event?.message ?? event;
+  const type = String(event?.type ?? message?.type ?? "").toLowerCase();
+  return type === "message_end" || (message?.role === "assistant" && ["error", "aborted", "cancelled"].includes(message?.stopReason ?? message?.stop_reason));
+}
+function meaningfulActivity(event: any): boolean {
+  const type = String(event?.type ?? event?.message?.type ?? "").toLowerCase();
+  return type.startsWith("message_") || type.startsWith("tool_") || type === "tool_call" || Boolean(event?.toolName ?? event?.tool_name);
+}
 function resolveModel(ctx: any, model: { provider: string; id: string } | undefined) {
   if (!model) return ctx?.model;
   const found = ctx?.modelRuntime?.getModel?.(model.provider, model.id) ?? ctx?.modelRuntime?.find?.(model.provider, model.id) ?? ctx?.modelRegistry?.find?.(model.provider, model.id);
@@ -65,8 +74,6 @@ export function createSdkForegroundRunner(loadSdk: () => Promise<any> = () => im
     const nestedSessionPath = input.reopenPath ?? manager.getSessionFile?.() ?? manager.sessionPath ?? manager.path ?? manager.getSessionPath?.() ?? session.sessionPath;
         if (typeof nestedSessionPath === "string") try { chmodSync(nestedSessionPath, 0o600); } catch { /* session may not be persisted until prompt */ }
     if (typeof session.steer === "function") input.onLiveBridge?.({ steer: (message) => session.steer(message) });
-    const events: any[] = []; const receive = (event: any) => { events.push(event); input.onEvent?.(event); };
-    const unsubscribe = session.subscribe?.(receive) ?? session.onEvent?.(receive);
     let stalled = false; let externallyAborted = false; let rejectAbort!: (reason: Error) => void;
     const aborted = new Promise<never>((_, reject) => { rejectAbort = reject; });
     const abort = () => { void Promise.resolve(session.abort?.()).catch(() => undefined); };
@@ -74,8 +81,16 @@ export function createSdkForegroundRunner(loadSdk: () => Promise<any> = () => im
     input.signal.addEventListener("abort", onAbort, { once: true });
     if (input.signal.aborted) onAbort();
     const prompt = input.continuationPrompt ?? [input.context, input.task.task].filter(Boolean).join("\n\n"); let timer: ReturnType<typeof setTimeout> | undefined;
+    const resetStall = () => {
+      if (!input.config.stallTimeoutMs) return;
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => { stalled = true; abort(); rejectAbort(new Error(`Subagent stalled after ${input.config.stallTimeoutMs}ms`)); }, input.config.stallTimeoutMs);
+    };
+    const events: any[] = [];
+    const receive = (event: any) => { if (terminalEvidence(event)) events.push(event), events.splice(0, Math.max(0, events.length - 20)); if (meaningfulActivity(event)) resetStall(); input.onEvent?.(event); };
+    const unsubscribe = session.subscribe?.(receive) ?? session.onEvent?.(receive);
     try {
-      if (input.config.stallTimeoutMs) timer = setTimeout(() => { stalled = true; abort(); rejectAbort(new Error(`Subagent stalled after ${input.config.stallTimeoutMs}ms`)); }, input.config.stallTimeoutMs);
+      resetStall();
       const response = await Promise.race([session.prompt(prompt, { expandPromptTemplates: false }), aborted]);
       if (typeof nestedSessionPath === "string") try { chmodSync(nestedSessionPath, 0o600); } catch { /* session persistence may be unavailable */ }
       if (stalled) throw new Error(`Subagent stalled after ${input.config.stallTimeoutMs}ms`);
