@@ -32,7 +32,7 @@ it("declares the Pi extension package contract", () => {
     pi: { extensions: ["./index.ts"] },
   });
   expect("private" in pkg).toBe(false);
-  expect(pkg.files).toEqual(["index.ts", "src", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]);
+  expect(pkg.files).toEqual(["index.ts", "src", "docs", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]);
   expect(pkg.peerDependencies?.["@earendil-works/pi-coding-agent"]).toBe("*");
   expect(pkg.peerDependencies?.["@earendil-works/pi-tui"]).toBe("*");
   expect(pkg.devDependencies?.["@earendil-works/pi-tui"]).toBe("0.84.2");

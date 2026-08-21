@@ -27,6 +27,7 @@
   "files": [
     "index.ts",
     "src",
+    "docs",
     "README.md",
     "LICENSE",
     "THIRD_PARTY_NOTICES.md"
@@ -42,7 +43,7 @@
   "scripts": {
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "verify:package": "node --input-type=module -e \"import { existsSync } from 'node:fs'; for (const f of ['index.ts','src','README.md','LICENSE','THIRD_PARTY_NOTICES.md']) if(!existsSync(f)) throw new Error('missing '+f)\"",
+    "verify:package": "node --input-type=module -e \"import { existsSync } from 'node:fs'; for (const f of ['index.ts','src','docs','README.md','LICENSE','THIRD_PARTY_NOTICES.md']) if(!existsSync(f)) throw new Error('missing '+f)\"",
     "pack:dry-run": "npm pack --dry-run",
     "check": "npm run typecheck && npm test && npm run verify:package"
   },
