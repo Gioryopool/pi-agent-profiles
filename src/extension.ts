@@ -12,6 +12,7 @@ import { createSdkForegroundRunner } from "./subagents-runtime/sdk-runner.js";
 import { RuntimeHistory } from "./subagents-runtime/history.js";
 import { createForegroundTools } from "./subagents-runtime/tools.js";
 import { claimRuntimeOwner, releaseRuntimeOwner } from "./subagents-runtime/ownership.js";
+import { selectToolNamespace } from "./subagents-runtime/tool-namespace.js";
 import { openHistoryOverlay } from "./subagents-runtime/ui/panel-overlay.js";
 import { BackgroundWidget, BackgroundWidgetState } from "./subagents-runtime/ui/background-widget.js";
 import { completionMessage, completionMessageDetails, renderSubagentCompletionMessage } from "./subagents-runtime/render/completion-message.js";
@@ -46,11 +47,18 @@ export type ExtensionDependencies = { runtimeManagerFactory?: (config: Compatibl
 export default function extension(pi: PiLike, dependencies: ExtensionDependencies = {}) {
   const storage = createStorage();
   const manager = new ProfileManager(pi);
-  // ExtensionAPI cannot enumerate tools. A synchronous neutral catalog response is the only safe public probe for a preloaded Joker runtime.
+  // ExtensionAPI cannot enumerate tools; retain the neutral synchronous probe for compatible runtimes.
   let preloadedCatalog = false;
   try { pi.events?.emit?.("pi-subagents:agents:v1", { version: 1, cwd: process.cwd(), setAgents(value: unknown) { if (Array.isArray(value)) preloadedCatalog = true; } }); } catch { /* a foreign responder must not prevent loading */ }
   let ownership = claimRuntimeOwner({ id: "pi-agent-profiles" });
-  const toolNamespace = preloadedCatalog || !ownership.claimed ? "agent_profiles_subagent_" as const : "subagent_" as const;
+  const toolNamespace = selectToolNamespace({
+    agentDir: getAgentDir(),
+    compatibleRuntimeDetected: preloadedCatalog,
+    configDirName: CONFIG_DIR_NAME,
+    cwd: process.cwd(),
+    ownerClaimed: ownership.claimed,
+    pathExists: existsSync,
+  });
   const namespaceDiagnostic = toolNamespace === "agent_profiles_subagent_" ? "Subagent tools were registered with the agent_profiles_subagent_ namespace because another compatible runtime is active." : undefined;
   let reportedNamespaceDiagnostic = false;
   const runtimeManagers = new Map<string, ForegroundTaskManager>();

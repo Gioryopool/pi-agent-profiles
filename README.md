@@ -85,7 +85,9 @@ See [Agent profiles and configuration](docs/agent-profiles.md) and [Subagent run
 
 ## Compatibility and limits
 
-This beta package requires Node.js 22.19.0 or newer. Its subagent runtime is standalone: it has no Joker imports and does not read Joker history or storage. Only one runtime can own Pi's canonical `subagent_*` tool names. If a compatible Joker runtime is detected first, this extension registers `agent_profiles_subagent_*` aliases; if this extension loads first, a later runtime may be unable to register its canonical tools.
+This beta package requires Node.js 22.19.0 or newer. Its subagent runtime is standalone: it has no Joker imports and does not read Joker history or storage. When `pi-subagents-j0k3r` is installed through Pi's managed user or project npm root, this extension registers `agent_profiles_subagent_*` aliases regardless of package order; without that evidence it registers the canonical `subagent_*` names.
+
+Pi does not expose active package or tool enumeration to extensions. A disabled managed npm installation can therefore still select aliases, while git, local-path, legacy global npm, and temporary Joker installations are not detected by package presence. See [Subagent runtime](docs/subagent-runtime.md#compatibility-ownership) for the exact boundary.
 
 Model-visible task results are capped at 16,000 characters. History, messaging, continuation, shortcut, trust, and session-ownership limits are documented in [Subagent runtime](docs/subagent-runtime.md).
 

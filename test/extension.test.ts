@@ -9,9 +9,14 @@ const discovery = vi.hoisted(() => ({
 const runtimeConfig = vi.hoisted(() => ({
   value: { globalModelProfiles: {}, projectModelProfiles: {}, diagnostics: [], backgroundHandoffShortcut: "ctrl+h" },
 }));
+const filesystem = vi.hoisted(() => ({
+  exists: (_path: string): boolean => false,
+}));
 
 vi.mock("node:fs", () => ({
+  existsSync: (path: string) => filesystem.exists(path),
   readFileSync: () => JSON.stringify(globalConfig.value),
+  readdirSync: () => [],
 }));
 vi.mock("../src/subagents-runtime/discovery.js", () => ({
   internalAgentCatalog: { discover: (...args: any[]) => discovery.discover(...args) },
@@ -99,18 +104,31 @@ describe("real Pi extension registration", () => {
   beforeEach(() => {
     delete (globalThis as any)[Symbol.for("pi.agent-profiles.subagents-runtime.v1")];
     globalConfig.value = { version: 1, shortcut: "ctrl+shift+p", profiles: {} };
+    filesystem.exists = () => false;
   });
 
-  it("registers exactly one canonical or namespaced eight-tool catalog", () => {
-    const canonical = fakePi(); extension(canonical as any);
-    expect([...canonical.tools.keys()]).toEqual(["subagent_list_agents", "subagent_run", "subagent_status", "subagent_result", "subagent_list_tasks", "subagent_cancel", "subagent_send_message", "subagent_continue"]);
-    for (const registered of canonical.tools.values()) expect(registered.renderResult).toEqual(expect.any(Function));
-    expect(canonical.tools.get("subagent_run").renderCall).toEqual(expect.any(Function));
-    delete (globalThis as any)[Symbol.for("pi.agent-profiles.subagents-runtime.v1")];
-    const namespaced = fakePi(); namespaced.events.emit = (name: string, request: any) => { if (name === "pi-subagents:agents:v1") request.setAgents([]); };
-    extension(namespaced as any);
-    expect([...namespaced.tools.keys()]).toEqual(["agent_profiles_subagent_list_agents", "agent_profiles_subagent_run", "agent_profiles_subagent_status", "agent_profiles_subagent_result", "agent_profiles_subagent_list_tasks", "agent_profiles_subagent_cancel", "agent_profiles_subagent_send_message", "agent_profiles_subagent_continue"]);
-    expect(namespaced.tools.get("agent_profiles_subagent_run").renderCall).toEqual(expect.any(Function));
+  it("registers exactly eight canonical tools when Joker is absent", () => {
+    const pi = fakePi(); extension(pi as any);
+    expect([...pi.tools.keys()]).toEqual(["subagent_list_agents", "subagent_run", "subagent_status", "subagent_result", "subagent_list_tasks", "subagent_cancel", "subagent_send_message", "subagent_continue"]);
+    expect([...pi.tools.keys()].filter((name) => name.startsWith("agent_profiles_subagent_"))).toHaveLength(0);
+    for (const registered of pi.tools.values()) expect(registered.renderResult).toEqual(expect.any(Function));
+    expect(pi.tools.get("subagent_run").renderCall).toEqual(expect.any(Function));
+  });
+
+  it("registers exactly eight namespaced tools when Joker is installed", () => {
+    filesystem.exists = (path) => path.endsWith("/npm/node_modules/pi-subagents-j0k3r/package.json");
+    const pi = fakePi(); extension(pi as any);
+    expect([...pi.tools.keys()]).toEqual(["agent_profiles_subagent_list_agents", "agent_profiles_subagent_run", "agent_profiles_subagent_status", "agent_profiles_subagent_result", "agent_profiles_subagent_list_tasks", "agent_profiles_subagent_cancel", "agent_profiles_subagent_send_message", "agent_profiles_subagent_continue"]);
+    expect([...pi.tools.keys()].filter((name) => name.startsWith("subagent_"))).toHaveLength(0);
+    expect(pi.tools.get("agent_profiles_subagent_run").renderCall).toEqual(expect.any(Function));
+  });
+
+  it("uses namespaced tools for a synchronous compatible catalog responder", () => {
+    const pi = fakePi();
+    pi.events.emit = (name: string, request: any) => { if (name === "pi-subagents:agents:v1") request.setAgents([]); };
+    extension(pi as any);
+    expect([...pi.tools.keys()]).toHaveLength(8);
+    expect([...pi.tools.keys()].every((name) => name.startsWith("agent_profiles_subagent_"))).toBe(true);
   });
 
   it("uses namespaced tools and one warning when ownership conflicts", async () => {

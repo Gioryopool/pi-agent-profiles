@@ -125,9 +125,11 @@ The tool remains registered to keep the eight-tool catalog stable, but execution
 
 ## Compatibility ownership
 
-`pi-subagents:model-route:v1` is an optional route adapter for an externally loaded compatible runtime. The neutral `pi-subagents:agents:v1` catalog event is emitted once, synchronously, at construction as a coexistence probe. External catalog data is used only when internal discovery is unavailable. Repeated or late replies are ignored or diagnosed.
+`pi-subagents:model-route:v1` is an optional route adapter for an externally loaded compatible runtime. The neutral `pi-subagents:agents:v1` catalog event is emitted once, synchronously, at construction as a compatibility probe. External catalog data is used only when internal discovery is unavailable. Repeated or late replies are ignored or diagnosed. Joker 1.5.4 does not implement this event.
 
-Pi keeps the first registration for each tool name. If the construction probe detects a preloaded Joker responder, this extension registers only namespaced aliases. If this extension loads first, a later Joker load may have its canonical registrations ignored. Pi exposes no public tool-definition lookup, so a construction-time responder probe cannot detect a later load.
+Before registering tools, the extension checks only Pi's managed npm package locations: `<getAgentDir()>/npm/node_modules/pi-subagents-j0k3r/package.json` and `<cwd>/.pi/npm/node_modules/pi-subagents-j0k3r/package.json`. Presence at either location selects the eight `agent_profiles_subagent_*` aliases, independent of settings order. With no installed-package signal, compatible responder, or existing package-local owner, it registers eight canonical `subagent_*` tools. It does not read Joker source, configuration, history, or storage.
+
+Pi 0.84.2 exposes neither active-package enumeration nor registered-tool lookup to extensions. Detection therefore has explicit limits: a disabled Joker package left in a managed npm root still selects aliases; git, local-path, legacy global npm, and temporary installs are not detected by package presence. Those installation forms avoid a conflict only when the other runtime participates in the synchronous compatibility probe or package-local owner contract. Joker 1.5.4 does neither, so those forms are not claimed as automatically compatible.
 
 Catalog events require nonempty `name`, `description`, and `scope` strings. Names are normalized to lowercase and duplicates are rejected case-insensitively. Event routes never contain profile persistence sentinels.
 
