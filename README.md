@@ -1,12 +1,18 @@
-# pi-agent-profiles
+# @gioryopool/pi-agent-profiles
 
-`pi-agent-profiles` is a beta, independently implemented Pi extension for named, session-scoped agent-routing profiles and a self-contained subagent runtime. It is not published to npm.
+`@gioryopool/pi-agent-profiles` is a beta, independently implemented Pi extension for named, session-scoped agent-routing profiles and a self-contained subagent runtime. The package is prepared for public npm publication, but no npm release has been published yet.
 
 > **Security warning:** Pi extensions execute with full system access. Install only code you trust, and review project configuration before trusting a project.
 
 ## Install
 
-Install from GitHub with Pi:
+For published releases, install the package from npm with Pi:
+
+```bash
+pi install npm:@gioryopool/pi-agent-profiles
+```
+
+Until the first npm release is available, install the current pre-release version from GitHub:
 
 ```bash
 pi install git:github.com/Gioryopool/pi-agent-profiles

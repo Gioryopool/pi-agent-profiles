@@ -24,13 +24,14 @@ const shippedText = [
 
 it("declares the Pi extension package contract", () => {
   expect(pkg).toMatchObject({
-    name: "pi-agent-profiles",
+    name: "@gioryopool/pi-agent-profiles",
     version: "0.1.0",
-    private: true,
     license: "MIT",
     main: "./index.ts",
+    publishConfig: { access: "public" },
     pi: { extensions: ["./index.ts"] },
   });
+  expect("private" in pkg).toBe(false);
   expect(pkg.files).toEqual(["index.ts", "src", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]);
   expect(pkg.peerDependencies?.["@earendil-works/pi-coding-agent"]).toBe("*");
   expect(pkg.peerDependencies?.["@earendil-works/pi-tui"]).toBe("*");

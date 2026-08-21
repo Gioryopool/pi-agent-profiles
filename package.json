@@ -1,7 +1,6 @@
 {
-  "name": "pi-agent-profiles",
+  "name": "@gioryopool/pi-agent-profiles",
   "version": "0.1.0",
-  "private": true,
   "description": "Pi agent routing profiles with a self-contained subagent runtime.",
   "keywords": [
     "pi",
@@ -19,6 +18,9 @@
     "url": "https://github.com/Gioryopool/pi-agent-profiles/issues"
   },
   "homepage": "https://github.com/Gioryopool/pi-agent-profiles#readme",
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "license": "MIT",
   "main": "./index.ts",
