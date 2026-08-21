@@ -12,12 +12,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Gioryopool/pi-agent-profiles.git"
+    "url": "git+https://github.com/Gioryopool/pi-multi-profiles.git"
   },
   "bugs": {
-    "url": "https://github.com/Gioryopool/pi-agent-profiles/issues"
+    "url": "https://github.com/Gioryopool/pi-multi-profiles/issues"
   },
-  "homepage": "https://github.com/Gioryopool/pi-agent-profiles#readme",
+  "homepage": "https://github.com/Gioryopool/pi-multi-profiles#readme",
   "publishConfig": {
     "access": "public"
   },

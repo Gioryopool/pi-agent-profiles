@@ -15,7 +15,7 @@ pi install npm:pi-multi-profiles
 Use GitHub only to try the current unreleased code:
 
 ```bash
-pi install git:github.com/Gioryopool/pi-agent-profiles
+pi install git:github.com/Gioryopool/pi-multi-profiles
 ```
 
 Restart Pi or run `/reload` after installation or configuration changes.
