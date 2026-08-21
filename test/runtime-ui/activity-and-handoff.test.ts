@@ -39,6 +39,14 @@ describe("runtime activity and handoff", () => {
     expect(text).toContain("\u001b[1;36m↳ write\u001b[0m");
   });
 
+  it("renders only the last three unique activities without repeating current", () => {
+    const text = progressText({ id: "task", agent: "worker", task: "work", status: "running", mode: "task", attempt: 1, effort: "low", liveActivity: { trail: [{ label: "codegraph" }, { label: "grep" }, { label: "find" }, { label: "assistant thinking" }], current: { label: "assistant thinking" } } });
+    expect(text).not.toContain("codegraph");
+    expect(text).toContain("↳ grep");
+    expect(text).toContain("↳ find");
+    expect(text.match(/assistant thinking/g)).toHaveLength(1);
+  });
+
   it("makes public snapshots bounded and excludes private runtime fields", () => {
     const snapshot = buildPublicTaskSnapshot({ id: "task", agent: "worker", task: "x".repeat(20_000), status: "running", createdAt: "now", result: "r".repeat(20_000), definition: { instructions: "secret" }, parentSessionId: "owner", liveActivity: { trail: [{ label: "read" }] } } as any);
     expect(snapshot.task).toHaveLength(16_000);
