@@ -11,9 +11,11 @@ export class RuntimeHistory {
   constructor(readonly path: string, private readonly listLimit = 100) {
     mkdirSync(dirname(path), { recursive: true, mode: 0o700 });
     try { chmodSync(dirname(path), 0o700); } catch { /* non-POSIX */ }
-    this.db = new DatabaseSync(path);
+    // Concurrent Pi processes share this package-owned database. Wait briefly for
+    // a writer rather than failing immediately, and let readers proceed in WAL mode.
+    this.db = new DatabaseSync(path, { timeout: 5_000 });
     try { chmodSync(path, 0o600); } catch { /* non-POSIX */ }
-    this.db.exec(`CREATE TABLE IF NOT EXISTS runtime_tasks (id TEXT PRIMARY KEY, parent_session_id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, data TEXT NOT NULL); CREATE INDEX IF NOT EXISTS runtime_tasks_session_created ON runtime_tasks(parent_session_id, created_at DESC); PRAGMA user_version = 1;`);
+    this.db.exec(`PRAGMA journal_mode = WAL; CREATE TABLE IF NOT EXISTS runtime_tasks (id TEXT PRIMARY KEY, parent_session_id TEXT NOT NULL, status TEXT NOT NULL, created_at TEXT NOT NULL, data TEXT NOT NULL); CREATE INDEX IF NOT EXISTS runtime_tasks_session_created ON runtime_tasks(parent_session_id, created_at DESC); PRAGMA user_version = 1;`);
     // Do not depend on SQLite JSON extensions: old process work cannot be resumed.
     const stale = this.db.prepare("SELECT id, data FROM runtime_tasks WHERE status IN (?, ?)").all("queued", "running") as Array<{ id: string; data: string }>;
     for (const row of stale) {

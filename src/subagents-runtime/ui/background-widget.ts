@@ -14,6 +14,9 @@ const entries = (tasks: PublicForegroundTask[]): Entry[] => {
   return running.length ? [{ key: "main", line: "main" }, ...running.map((task) => ({ key: task.id, line: `${task.agent} ${activity(task)}` }))] : [];
 };
 const selected = (items: Entry[], key: string) => items.some((item) => item.key === key) ? key : items[0]?.key ?? "main";
+const transientStorageError = (error: unknown) => error instanceof Error
+  && (error as NodeJS.ErrnoException).code === "ERR_SQLITE_ERROR"
+  && /database is (locked|busy)/i.test(error.message);
 
 export function renderBackgroundWidgetLines(tasks: PublicForegroundTask[], selectedKey?: string): string[] | undefined {
   const items = entries(tasks); if (!items.length) return undefined;
@@ -42,5 +45,12 @@ export class BackgroundWidget implements Component {
   constructor(private readonly state: BackgroundWidgetState, private readonly theme: any) {}
   invalidate() {}
   handleInput(data: string) { this.state.handleTerminalInput(data); }
-  render(width: number) { return this.state.renderLines().flatMap((line) => wrapLineToWidth(line.startsWith("● ") ? (this.theme?.fg?.("warning", this.theme?.bold?.(line) ?? line) ?? line) : line, width)); }
+  render(width: number) {
+    try {
+      return this.state.renderLines().flatMap((line) => wrapLineToWidth(line.startsWith("● ") ? (this.theme?.fg?.("warning", this.theme?.bold?.(line) ?? line) ?? line) : line, width));
+    } catch (error) {
+      if (transientStorageError(error)) return [];
+      throw error;
+    }
+  }
 }

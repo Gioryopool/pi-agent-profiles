@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { BackgroundWidgetState, renderBackgroundWidgetLines } from "../../src/subagents-runtime/ui/background-widget.js";
+import { BackgroundWidget, BackgroundWidgetState, renderBackgroundWidgetLines } from "../../src/subagents-runtime/ui/background-widget.js";
 
 const task = (id: string, session = "owner", status: any = "running"): any => ({ id, agent: "worker", task: "private task", parentSessionId: session, mode: "background", status, createdAt: "now", liveActivity: { trail: [], current: { label: "read" } } });
 
@@ -25,5 +25,14 @@ describe("background widget", () => {
 
   it("does not activate for foreground, terminal, or another-session tasks", () => {
     expect(renderBackgroundWidgetLines([{ ...task("foreground"), mode: "task" }, { ...task("done", "owner", "completed") }])).toBeUndefined();
+  });
+
+  it("contains SQLite contention during rendering but preserves other errors", () => {
+    const locked = Object.assign(new Error("database is locked"), { code: "ERR_SQLITE_ERROR" });
+    const blocked = new BackgroundWidget(new BackgroundWidgetState(() => { throw locked; }), {});
+    expect(blocked.render(80)).toEqual([]);
+
+    const broken = new BackgroundWidget(new BackgroundWidgetState(() => { throw new Error("unexpected bug"); }), {});
+    expect(() => broken.render(80)).toThrow("unexpected bug");
   });
 });

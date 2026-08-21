@@ -21,6 +21,21 @@ describe("Phase 3 package-owned runtime history", () => {
     reopened.close();
   });
 
+  it("uses WAL so a second connection can read history while a writer holds a transaction", () => {
+    const path = join(mkdtempSync(join(tmpdir(), "profiles-history-")), "history.sqlite");
+    const writer = new RuntimeHistory(path);
+    writer.save({ id: "saved", parentSessionId: "parent", agent: "worker", task: "work", mode: "background", status: "completed", createdAt: "now" });
+    const reader = new RuntimeHistory(path);
+    const lock = new DatabaseSync(path);
+    expect(lock.prepare("PRAGMA journal_mode").get()).toEqual({ journal_mode: "wal" });
+    lock.exec("BEGIN IMMEDIATE");
+    expect(reader.list("parent").map((task) => task.id)).toEqual(["saved"]);
+    lock.exec("COMMIT");
+    lock.close();
+    reader.close();
+    writer.close();
+  });
+
   it("prunes persisted rows per parent session and retains only each session's newest limit after reopen", () => {
     const path = join(mkdtempSync(join(tmpdir(), "profiles-history-")), "history.sqlite");
     const history = new RuntimeHistory(path, 2);
