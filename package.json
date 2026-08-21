@@ -1,6 +1,6 @@
 {
   "name": "pi-multi-profiles",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pi agent routing profiles with a self-contained subagent runtime.",
   "keywords": [
     "pi",
