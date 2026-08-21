@@ -93,14 +93,18 @@ Model-visible task results are capped at 16,000 characters. History, messaging, 
 
 ### Coexistence with Joker
 
-`pi-multi-profiles` can run alongside `pi-subagents-j0k3r`, but Pi may report expected extension issues when both packages register the same shortcuts. This does not prevent Pi from starting or either runtime from loading.
+`pi-multi-profiles` can run alongside `pi-subagents-j0k3r`, but the two packages do not share execution ownership. With a managed Joker installation present, normal orchestrators such as Gentle AI call Joker through the canonical `subagent_*` tools. The active `pi-multi-profiles` profile can still provide Joker with the model and effort assigned to each agent through the compatible model-route event. Switching profiles affects subsequent delegations, not tasks already running.
+
+This package's standalone runtime remains registered under `agent_profiles_subagent_*`, but normal orchestrators do not select those aliases automatically. They are available only to prompts, agents, or extensions that explicitly invoke them. Remove Joker if you want this package's runtime to own the canonical `subagent_*` tools used by normal delegation.
+
+Pi may also report expected extension issues when both packages register the same shortcuts. This does not prevent Pi from starting or either runtime from loading.
 
 | Startup message | Effect |
 | --- | --- |
 | `Extension shortcut conflict` for `ctrl+,` or `ctrl+h` | Only one handler can own each shortcut. When Pi says it is using `pi-multi-profiles/index.ts`, these keys open this package's history panel and hand off this package's foreground task; they do not invoke Joker's corresponding handlers. |
-| Tools registered with the `agent_profiles_subagent_` namespace | Another compatible runtime already owns the canonical `subagent_*` names. This package deliberately registers `agent_profiles_subagent_*` aliases instead of replacing those tools. |
+| Tools registered with the `agent_profiles_subagent_` namespace | Joker owns the canonical `subagent_*` names, so normal delegation runs through Joker. This package's runtime remains available only through explicit calls to its aliases. |
 
-The namespace message is a compatibility notice, not a failure. The shortcut message has a real but limited consequence: the handler named by Pi wins that key binding. Keep both packages if you need both runtimes and configure non-conflicting shortcuts where supported. Otherwise, install only one subagent runtime to avoid duplicated functionality and startup notices.
+The namespace message is a compatibility notice, not a failure. The shortcut message has a real but limited consequence: the handler named by Pi wins that key binding. Keep both packages when you want Joker to execute normal delegations while active profiles control their model and effort routing. Otherwise, install only one subagent runtime to avoid duplicated functionality and startup notices.
 
 ## Acknowledgements
 
