@@ -55,6 +55,34 @@ Trusted projects may add project-scoped profiles. Project configuration is never
 - Safe route rollback and restoration of active/off state when a Pi session is rebound.
 - Optional synchronous compatibility events for external runtimes, without making them a dependency.
 
+## Controls
+
+### Agent profiles
+
+| Control | Action |
+| --- | --- |
+| `/agent-profiles` | Open the profile assignment panel. |
+| `ctrl+tab` | Cycle through configured profiles. |
+| `Tab` / `Shift+Tab` | Move between profile tabs and `+ new`. |
+| `Up` / `Down` / `j` / `k` | Move through assignments. |
+| `Enter` / `M` / `E` | Edit the selected model or effort. |
+| `S` / `A` | Save, or save and activate the profile. |
+| `N` / `R` / `Del` | Create, reset, or delete. |
+| `Esc` / `q` | Return or close the panel. |
+
+### Subagents
+
+| Control | Action |
+| --- | --- |
+| `/subagents` / `ctrl+,` | Open execution history. |
+| `Up` / `Down` / `Enter` | Select a task and open its details. |
+| `ctrl+o` / `ctrl+t` | Toggle tool output or thinking. |
+| `ctrl+h` | Hand foreground work to the background. |
+| `x` | Cancel the selected queued or running task. |
+| Double `Esc` | Cancel active work for the current parent session. |
+
+See [Agent profiles and configuration](docs/agent-profiles.md) and [Subagent runtime](docs/subagent-runtime.md) for complete commands, configuration, and control behavior.
+
 ## Compatibility and limits
 
 This beta package requires Node.js 22.19.0 or newer. Its subagent runtime is standalone: it has no Joker imports and does not read Joker history or storage. Only one runtime can own Pi's canonical `subagent_*` tool names. If a compatible Joker runtime is detected first, this extension registers `agent_profiles_subagent_*` aliases; if this extension loads first, a later runtime may be unable to register its canonical tools.
