@@ -91,6 +91,17 @@ Pi does not expose active package or tool enumeration to extensions. A disabled 
 
 Model-visible task results are capped at 16,000 characters. History, messaging, continuation, shortcut, trust, and session-ownership limits are documented in [Subagent runtime](docs/subagent-runtime.md).
 
+### Coexistence with Joker
+
+`pi-multi-profiles` can run alongside `pi-subagents-j0k3r`, but Pi may report expected extension issues when both packages register the same shortcuts. This does not prevent Pi from starting or either runtime from loading.
+
+| Startup message | Effect |
+| --- | --- |
+| `Extension shortcut conflict` for `ctrl+,` or `ctrl+h` | Only one handler can own each shortcut. When Pi says it is using `pi-multi-profiles/index.ts`, these keys open this package's history panel and hand off this package's foreground task; they do not invoke Joker's corresponding handlers. |
+| Tools registered with the `agent_profiles_subagent_` namespace | Another compatible runtime already owns the canonical `subagent_*` names. This package deliberately registers `agent_profiles_subagent_*` aliases instead of replacing those tools. |
+
+The namespace message is a compatibility notice, not a failure. The shortcut message has a real but limited consequence: the handler named by Pi wins that key binding. Keep both packages if you need both runtimes and configure non-conflicting shortcuts where supported. Otherwise, install only one subagent runtime to avoid duplicated functionality and startup notices.
+
 ## Acknowledgements
 
 This project owes meaningful inspiration to [**pi-subagents-j0k3r**](https://github.com/j0k3r-dev-rgl/pi-subagents-j0k3r) by [j0k3r](https://github.com/j0k3r-dev-rgl). Runtime and presentation behavior was independently adapted from that project under the MIT License. Thank you to j0k3r for making that work available.
