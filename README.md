@@ -1,4 +1,4 @@
-# @gioryopool/pi-agent-profiles
+# pi-multi-profiles
 
 Named, session-scoped routing profiles for Pi, with a self-contained runtime for running markdown-defined subagents in the foreground or background.
 
@@ -6,10 +6,10 @@ Named, session-scoped routing profiles for Pi, with a self-contained runtime for
 
 ## Install
 
-Install the latest published release from npm:
+To install a release published on npm:
 
 ```bash
-pi install npm:@gioryopool/pi-agent-profiles
+pi install npm:pi-multi-profiles
 ```
 
 Use GitHub only to try the current unreleased code:

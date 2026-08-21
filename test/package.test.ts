@@ -24,7 +24,7 @@ const shippedText = [
 
 it("declares the Pi extension package contract", () => {
   expect(pkg).toMatchObject({
-    name: "@gioryopool/pi-agent-profiles",
+    name: "pi-multi-profiles",
     version: "0.1.0",
     license: "MIT",
     main: "./index.ts",
